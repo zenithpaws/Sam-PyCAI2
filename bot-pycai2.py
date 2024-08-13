@@ -22,7 +22,7 @@ def get_bot_token():
     token_ref = db.collection("secrets").document("bot_token")
     token_doc = token_ref.get()
     if token_doc.exists:
-        return token_doc.to_dict().get("token")
+        return token_doc.to_dict().get("test_bot_token")
     else:
         return None
 
@@ -32,17 +32,23 @@ def get_cai_owner_id():
     doc = doc_ref.get()
     return doc.to_dict()["ryzenid"]
 
-# Function to fetch c.ai API key from Firestore
-def get_cai_char_id():
-    doc_ref = db.collection("secrets").document("c.ai_charid")
+# Function to fetch c.ai Character ID from Firestore
+def get_cai_char_id(id):
+    doc_ref = db.collection("character_ids").document(f"id{id}")
     doc = doc_ref.get()
-    return doc.to_dict()["id"]
+    return doc.to_dict()["char_id"]
 
-# Function to fetch c.ai API key from Firestore
-def get_cai_chat_id():
-    doc_ref = db.collection("secrets").document("c.ai_chatid")
+# Function to fetch c.ai Chat ID from Firestore
+def get_cai_chat_id(id):
+    doc_ref = db.collection("character_ids").document(f"id{id}")
     doc = doc_ref.get()
-    return doc.to_dict()["id"]
+    return doc.to_dict()["chat_id"]
+
+# Function to fetch c.ai Creator ID from Firestore
+def get_cai_creator_id(id):
+    doc_ref = db.collection("character_ids").document(f"id{id}")
+    doc = doc_ref.get()
+    return doc.to_dict()["creator_id"]
 
 # Function to check what roles are allowed to run commands
 async def get_allowed_roles():
@@ -114,11 +120,12 @@ async def pycai(message):
     return r
 
 # Initialize PyCAI2 variables
+current_id = 0
 owner_id = get_cai_owner_id()
-char = get_cai_char_id()
-chat_id = get_cai_chat_id()
+char = get_cai_char_id(current_id)
+chat_id = get_cai_chat_id(current_id)
 client = PyAsyncCAI2(owner_id)
-public_channel_id = 1243599282456756404
+public_channel_id = 1238946262514925588
 
 # Function to start the bot
 def run_bot():
@@ -154,17 +161,23 @@ async def on_message(message):
         return
 
 # Command to reset chat
-@bot.slash_command(description="idfk")
-async def rtv(ctx):
+@bot.slash_command(description="Command to reset chat")
+async def rc(ctx):
     if await permission_check(ctx):
         async with client.connect(owner_id) as chat2:
-            await chat2.new_chat({get_cai_char_id}, with_greeting=False)
+            await chat2.new_chat({get_cai_char_id(current_id)}, {get_cai_chat_id(current_id)}, {get_cai_creator_id(current_id)}, False)
 
-# Command to reset chat
+# Command to test the permissioncheck function
 @bot.slash_command(description="Command to test the permissioncheck function")
 async def permissiontest(ctx):
     if await permission_check(ctx):
         await ctx.send("test success")
+
+# Command to kill bot script
+@bot.slash_command(description="Command to kill bot script")
+async def kill(ctx):
+    if await permission_check(ctx):
+        quit()
 
 # Run the bot
 if __name__ == "__main__":
